@@ -1,4 +1,4 @@
-# MS-SQL-Server-Developer
+# MS SQL Server Developer
 
 <i>to strive, to seek, to find, and not to yield</i>
 <p align="left">
