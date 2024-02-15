@@ -6,7 +6,7 @@
 Repository created by Alexander Etkin for the implementation of home tasks and special tasks of the OTUS MS SQL Server <b>Developer</b> training course
 </p>
 <p>
-<img src="src\ms sql logo.jpeg" height="50"><img src="src\smss-logo.png" height="50"><img src="src/vs logo.png" height="50">
+<img src="src/ms sql logo.jpeg" height="50"><img src="src/smss-logo.png" height="50"><img src="src/vs logo.png" height="50">
 
 </p>
 
