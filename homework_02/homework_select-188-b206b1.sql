@@ -152,4 +152,4 @@ FROM
 WHERE SI.StockItemName = N'Chocolate frogs 250g'
 GROUP BY CC.CustomerID,	CC.CustomerName, CC.PhoneNumber
 HAVING SUM(OL.Quantity)>0
-ORDER BY 2,1,3
+ORDER BY CC.CustomerID, CC.CustomerName, CC.PhoneNumber
