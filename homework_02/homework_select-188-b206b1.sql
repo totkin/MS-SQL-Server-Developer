@@ -62,7 +62,17 @@ group by PS.SupplierID,PS.SupplierName
 Таблицы: Sales.Orders, Sales.OrderLines, Sales.Customers.
 */
 
-напишите здесь свое решение
+select
+	OrderID,
+	format(OrderDate,'dd.mm.YYYY') as OrderDate,
+	format(OrderDate,'mm','ru-RU') as [название месяца, в котором был сделан заказ],
+	DATEPART(QUARTER, OrderDate) as [номер квартала, в котором был сделан заказ],
+	 as [треть года, к которой относится дата заказа],
+	Customer
+
+
+from Orders
+where UnitPrice>100 or Quantity>20
 
 /*
 4. Заказы поставщикам (Purchasing.Suppliers),
@@ -78,7 +88,7 @@ group by PS.SupplierID,PS.SupplierName
 Таблицы: Purchasing.Suppliers, Purchasing.PurchaseOrders, Application.DeliveryMethods, Application.People.
 */
 
-напишите здесь свое решение
+select DeliveryMethodName,ExpectedDeliveryDate
 
 /*
 5. Десять последних продаж (по дате продажи) с именем клиента и именем сотрудника,

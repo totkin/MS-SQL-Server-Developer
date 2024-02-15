@@ -17,14 +17,6 @@ homework_01
 [Ссылка на ДЗ со скриншотами](Result.md)
 <hr>
 
-### Реализация ДЗ
-установка в docker
-
-```bash
-docker pull mcr.microsoft.com/mssql/server:2019-latest
-```
-
-<hr>
 
 ### Описание ДЗ
 
