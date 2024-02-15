@@ -38,7 +38,7 @@ where StockItemName like '%urgent%' or StockItemName like  'Animal%'
 */
 
 select PS.SupplierID,PS.SupplierName
-from  Purchasing.Suppliers as PS		
+from  Purchasing.Suppliers                      as PS		
 	  left outer join Purchasing.PurchaseOrders as PPO on PS.SupplierID=PPO.SupplierID
 where PPO.SupplierID is null
 group by PS.SupplierID,PS.SupplierName
@@ -68,20 +68,20 @@ DECLARE @OFF BIGINT=1000, @FETCH BIGINT=100
 
 SELECT
 	OO.OrderID,
-	format(OO.OrderDate,'dd.MM.yyyy')      AS OrderDate,
-	format(OO.OrderDate,'MMMM','ru-RU')    AS [название месяца, в котором был сделан заказ],
+	FORMAT(OO.OrderDate,'dd.MM.yyyy')      AS OrderDate,
+	FORMAT(OO.OrderDate,'MMMM','ru-RU')    AS [название месяца, в котором был сделан заказ],
 	DATEPART(QUARTER, OO.OrderDate)        AS [номер квартала, в котором был сделан заказ],
 	CASE WHEN MONTH(OO.OrderDate)<5 THEN 1
 		 WHEN MONTH(OO.OrderDate)<9 THEN 2
 		 ELSE 3 END                        AS [треть года, к которой относится дата заказа],
 	CC.CustomerName    
 FROM
-	Sales.OrderLines AS OL
-	INNER JOIN Sales.Orders AS OO ON OL.OrderID = OO.OrderID
+	Sales.OrderLines           AS OL
+	INNER JOIN Sales.Orders    AS OO ON OL.OrderID = OO.OrderID
 	INNER JOIN Sales.Customers AS CC ON OO.CustomerID = CC.CustomerID
 WHERE OL.UnitPrice>100 or OL.Quantity>20
 GROUP BY OO.OrderID,OO.OrderDate,CC.CustomerName
-ORDER BY 4,5,OO.OrderDate
+ORDER BY 4,5,OO.OrderDate --по номерам, конечно, не очень правильно, но тут короче
 	OFFSET @OFF ROWS
     FETCH NEXT @FETCH ROWS ONLY
 
@@ -101,15 +101,15 @@ ORDER BY 4,5,OO.OrderDate
 */
 
 SELECT DISTINCT
-	PO.PurchaseOrderID,  --тут вариант оставил, если ID не нужно, можно закомментить строку и более поятно сработает DISTINCT
-	DM.DeliveryMethodName as [способ доставки],
-	PO.ExpectedDeliveryDate as [дата доставки],
-	SS.SupplierName as [имя поставщика],
-	PP.FullName as [имя контактного лица принимавшего заказ]  
+	PO.PurchaseOrderID,     --тут вариант оставил, если ID не нужно, можно закомментить строку и более поятно сработает DISTINCT
+	DM.DeliveryMethodName   AS [способ доставки],
+	PO.ExpectedDeliveryDate AS [дата доставки],
+	SS.SupplierName         AS [имя поставщика],
+	PP.FullName             AS [имя контактного лица принимавшего заказ]  
 FROM
-	Purchasing.Suppliers AS SS
-	INNER JOIN Purchasing.PurchaseOrders AS PO ON SS.SupplierID = PO.SupplierID
-	INNER JOIN Application.People AS PP ON PO.ContactPersonID = PP.PersonID
+	Purchasing.Suppliers                   AS SS
+	INNER JOIN Purchasing.PurchaseOrders   AS PO ON SS.SupplierID = PO.SupplierID
+	INNER JOIN Application.People          AS PP ON PO.ContactPersonID = PP.PersonID
 	INNER JOIN Application.DeliveryMethods AS DM ON PO.DeliveryMethodID = DM.DeliveryMethodID
 WHERE
 	YEAR(PO.ExpectedDeliveryDate)*100 + MONTH(PO.ExpectedDeliveryDate)=201301
@@ -123,6 +123,15 @@ WHERE
 Сделать без подзапросов.
 */
 
+SELECT TOP(10)
+	OO.OrderID,
+	PP.FullName,
+	CC.CustomerName
+FROM
+	Sales.Orders                  AS OO
+	INNER JOIN Application.People AS PP ON OO.SalespersonPersonID = PP.PersonID
+	INNER JOIN Sales.Customers    AS CC ON OO.CustomerID = CC.CustomerID
+ORDER BY OO.OrderDate DESC
 
 
 /*
@@ -131,4 +140,16 @@ WHERE
 Имя товара смотреть в таблице Warehouse.StockItems.
 */
 
-напишите здесь свое решение
+-- Упрощенный вариант: имена клиентов=CustomerName, а не имена сотрудников клиентов
+-- Сделана доп проверка на объем покупки больше 0
+
+SELECT CC.CustomerID, CC.CustomerName, CC.PhoneNumber
+FROM
+	Sales.Orders                     AS OO
+	INNER JOIN Sales.Customers       AS CC ON OO.CustomerID = CC.CustomerID
+	INNER JOIN Sales.OrderLines      AS OL ON OO.OrderID = OL.OrderID
+	INNER JOIN  Warehouse.StockItems AS SI ON OL.StockItemID = SI.StockItemID
+WHERE SI.StockItemName = N'Chocolate frogs 250g'
+GROUP BY CC.CustomerID,	CC.CustomerName, CC.PhoneNumber
+HAVING SUM(OL.Quantity)>0
+ORDER BY 2,1,3
