@@ -66,6 +66,8 @@ group by PS.SupplierID,PS.SupplierName
 
 DECLARE @OFF BIGINT=1000, @FETCH BIGINT=100
 
+-- вариант TOP WITH TIES https://learn.microsoft.com/ru-ru/sql/t-sql/queries/top-transact-sql?view=sql-server-ver16
+
 SELECT
 	OO.OrderID,
 	FORMAT(OO.OrderDate,'dd.MM.yyyy')      AS OrderDate,
@@ -79,7 +81,7 @@ FROM
 	Sales.OrderLines           AS OL
 	INNER JOIN Sales.Orders    AS OO ON OL.OrderID = OO.OrderID
 	INNER JOIN Sales.Customers AS CC ON OO.CustomerID = CC.CustomerID
-WHERE OL.UnitPrice>100 or OL.Quantity>20
+WHERE (OL.UnitPrice>100 or OL.Quantity>20) AND OO.[PickingCompletedWhen] IS NOT NULL
 GROUP BY OO.OrderID,OO.OrderDate,CC.CustomerName
 ORDER BY 4,5,OO.OrderDate --по номерам, конечно, не очень правильно, но тут короче
 	OFFSET @OFF ROWS
@@ -112,7 +114,7 @@ FROM
 	INNER JOIN Application.People          AS PP ON PO.ContactPersonID = PP.PersonID
 	INNER JOIN Application.DeliveryMethods AS DM ON PO.DeliveryMethodID = DM.DeliveryMethodID
 WHERE
-	YEAR(PO.ExpectedDeliveryDate)*100 + MONTH(PO.ExpectedDeliveryDate)=201301
+	YEAR(PO.ExpectedDeliveryDate)*100 + MONTH(PO.ExpectedDeliveryDate)=201301 -- вариант -- PO.ExpectedDeliveryDate between '20130101' and '20130131'
 	AND DM.DeliveryMethodName in (N'Air Freight' , N'Refrigerated Air Freight')
 	AND PO.IsOrderFinalized=1
 
