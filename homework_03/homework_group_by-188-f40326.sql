@@ -30,7 +30,16 @@ USE WideWorldImporters
 Продажи смотреть в таблице Sales.Invoices и связанных таблицах.
 */
 
-напишите здесь свое решение
+SELECT
+	YEAR(II.InvoiceDate)                              as [Год продажи],
+	MONTH(II.InvoiceDate)                             as [Месяц продажи],
+	AVG(IL.UnitPrice)                                 as [Средняя цена за месяц по всем товарам], 
+	SUM(isnull(IL.Quantity,0)*isnull(IL.UnitPrice,0)) as [Общая сумма продаж за месяц]
+FROM
+	Sales.Invoices                AS II
+	INNER JOIN Sales.InvoiceLines AS IL ON II.InvoiceID = IL.InvoiceID
+GROUP BY YEAR(II.InvoiceDate),MONTH(II.InvoiceDate)   
+ORDER BY 1,2
 
 /*
 2. Отобразить все месяцы, где общая сумма продаж превысила 4 600 000
@@ -43,7 +52,18 @@ USE WideWorldImporters
 Продажи смотреть в таблице Sales.Invoices и связанных таблицах.
 */
 
-напишите здесь свое решение
+
+SELECT
+	YEAR(II.InvoiceDate)                              as [Год продажи],
+	MONTH(II.InvoiceDate)                             as [Месяц продажи],
+	SUM(isnull(IL.Quantity,0)*isnull(IL.UnitPrice,0)) as [Общая сумма продаж за месяц]
+FROM
+	Sales.Invoices                AS II
+	INNER JOIN Sales.InvoiceLines AS IL ON II.InvoiceID = IL.InvoiceID
+GROUP BY YEAR(II.InvoiceDate),MONTH(II.InvoiceDate)
+HAVING SUM(isnull(IL.Quantity,0)*isnull(IL.UnitPrice,0))>4600000
+ORDER BY 1,2
+
 
 /*
 3. Вывести сумму продаж, дату первой продажи
@@ -62,7 +82,20 @@ USE WideWorldImporters
 Продажи смотреть в таблице Sales.Invoices и связанных таблицах.
 */
 
-напишите здесь свое решение
+SELECT
+	YEAR(II.InvoiceDate)                              as [Год продажи],
+	MONTH(II.InvoiceDate)                             as [Месяц продажи],
+	SI.StockItemName                                  as [Наименование товара],
+	SUM(isnull(IL.Quantity,0)*isnull(IL.UnitPrice,0)) as [Общая сумма продаж за месяц],
+	MIN(II.InvoiceDate)                               as [Дата первой продажи],
+	SUM(isnull(IL.Quantity,0))                        as [Количество проданного]
+FROM
+	Sales.Invoices                  AS II
+	INNER JOIN Sales.InvoiceLines   AS IL ON II.InvoiceID = IL.InvoiceID
+	INNER JOIN Warehouse.StockItems AS SI ON IL.StockItemID = SI.StockItemID
+GROUP BY YEAR(II.InvoiceDate),MONTH(II.InvoiceDate),SI.StockItemName
+HAVING SUM(isnull(IL.Quantity,0))>50
+ORDER BY 1,2,3
 
 -- ---------------------------------------------------------------------------
 -- Опционально
@@ -71,3 +104,15 @@ USE WideWorldImporters
 Написать запросы 2-3 так, чтобы если в каком-то месяце не было продаж,
 то этот месяц также отображался бы в результатах, но там были нули.
 */
+
+SELECT
+	YEAR(II.InvoiceDate)                              AS [Год продажи],
+	MONTH(II.InvoiceDate)                             AS [Месяц продажи],
+	CASE WHEN SUM(isnull(IL.Quantity,0)*isnull(IL.UnitPrice,0))>4600000
+	     THEN SUM(isnull(IL.Quantity,0)*isnull(IL.UnitPrice,0))
+	     ELSE 0 END                                   AS [Общая сумма продаж за месяц]
+FROM
+	Sales.Invoices                AS II  
+	INNER JOIN Sales.InvoiceLines AS IL ON II.InvoiceID = IL.InvoiceID
+GROUP BY YEAR(II.InvoiceDate),MONTH(II.InvoiceDate)
+ORDER BY 1,2
