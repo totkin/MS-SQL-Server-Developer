@@ -4,7 +4,7 @@
 
 <hr>
 
-### Реализация ДЗ
+### Реализация ДЗ (в контейнере)
 
 На основе [инструкции Microsoft](https://learn.microsoft.com/ru-ru/sql/linux/tutorial-restore-backup-in-sql-server-container?view=sql-server-ver16&tabs=prod)
 
