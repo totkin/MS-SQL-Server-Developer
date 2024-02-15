@@ -29,8 +29,9 @@ docker cp WideWorldImporters-Full.bak OTUSSQL:/var/opt/mssql/backup
 docker cp WideWorldImportersDW-Full.bak OTUSSQL:/var/opt/mssql/backup
 ```
 ![restore_from_backup](../src/hw01_restore_from_backup.png)
-```
-```
+
+<hr>
+<hr>
 база восстановлена успешно:
 
 
