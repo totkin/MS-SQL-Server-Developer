@@ -160,8 +160,65 @@ ORDER BY CustomerID, CustomerName
 
 -- var 1
 -------------------------------------------------------------------------------
-WITH SI(StockItemID)
+
+WITH ITEMS(StockItemID)
 AS(
+SELECT TOP(3)
+	StockItemID
+FROM [Sales].[InvoiceLines]
+WHERE isnull(Quantity,0)>0
+GROUP BY StockItemID
+ORDER BY MAX([UnitPrice]) DESC)
+
+-- --всё вместе
+SELECT DISTINCT CIT.CityID, CIT.CityName, PPP.FullName
+FROM
+	Application.Cities            AS CIT
+	INNER JOIN Sales.Customers    AS CCC ON CIT.CityID           = CCC.DeliveryCityID
+	INNER JOIN Sales.Invoices     AS INV ON CCC.CustomerID       = INV.CustomerID
+	INNER JOIN Application.People AS PPP ON INV.PackedByPersonID = PPP.PersonID
+	INNER JOIN Sales.InvoiceLines AS SIL ON INV.InvoiceID        = SIL.InvoiceID
+	INNER JOIN ITEMS                     ON ITEMS.StockItemID    = SIL.StockItemID
+
+-- -- только города
+SELECT DISTINCT CIT.CityID, CIT.CityName
+FROM
+	Application.Cities            AS CIT
+	INNER JOIN Sales.Customers    AS CCC ON CIT.CityID           = CCC.DeliveryCityID
+	INNER JOIN Sales.Invoices     AS INV ON CCC.CustomerID       = INV.CustomerID
+	INNER JOIN Sales.InvoiceLines AS SIL ON INV.InvoiceID        = SIL.InvoiceID
+	INNER JOIN ITEMS                     ON ITEMS.StockItemID    = SIL.StockItemID
+
+-- -- только сотрудники
+SELECT DISTINCT PPP.FullName
+FROM
+	Sales.Customers               AS CCC 
+	INNER JOIN Sales.Invoices     AS INV ON CCC.CustomerID       = INV.CustomerID
+	INNER JOIN Application.People AS PPP ON INV.PackedByPersonID = PPP.PersonID
+	INNER JOIN Sales.InvoiceLines AS SIL ON INV.InvoiceID        = SIL.InvoiceID
+	INNER JOIN ITEMS                     ON ITEMS.StockItemID    = SIL.StockItemID
+
+
+-- var 2
+-------------------------------------------------------------------------------
+
+SELECT DISTINCT CIT.CityID, CIT.CityName, PPP.FullName
+FROM
+	Application.Cities            AS CIT
+	INNER JOIN Sales.Customers    AS CCC ON CIT.CityID           = CCC.DeliveryCityID
+	INNER JOIN Sales.Invoices     AS INV ON CCC.CustomerID       = INV.CustomerID
+	INNER JOIN Application.People AS PPP ON INV.PackedByPersonID = PPP.PersonID
+	INNER JOIN Sales.InvoiceLines AS SIL ON INV.InvoiceID        = SIL.InvoiceID
+WHERE SIL.StockItemID in (
+	SELECT TOP(3)
+		StockItemID
+	FROM [Sales].[InvoiceLines]
+	WHERE isnull(Quantity,0)>0
+	GROUP BY StockItemID
+	ORDER BY MAX([UnitPrice]) DESC)
+
+
+
 
 
 -- ---------------------------------------------------------------------------
@@ -200,3 +257,37 @@ FROM Sales.Invoices
 ORDER BY TotalSumm DESC
 
 -- --
+-- Изменения в сторону читабельности и более явного выделения соединений.
+-- По оптимизации есть смысл:
+-- (1) view написать,
+-- (2) сделать промежуточный слой аналитических таблиц на часто используемые связки ХХХ <-> ХХХLines
+-- (3) сбросить дланные в темп-таблицы и собирать уже из них
+-- (*) проверить индексы (маловероятно, но все же)
+
+SELECT LL.InvoiceID, LL.InvoiceDate, PP.FullName, LL.TotalSummByInvoice, RR.TotalSummForPickedItems
+FROM
+	(
+		select
+			SI.InvoiceID,
+			MAX(SI.InvoiceDate)           AS InvoiceDate,
+			MAX(SI.OrderID)               AS OrderID,
+			SUM(IL.Quantity*IL.UnitPrice) AS TotalSummByInvoice,
+			MAX(SI.SalespersonPersonID)   AS SalespersonPersonID
+		from
+			Sales.Invoices                AS SI
+			INNER JOIN Sales.InvoiceLines AS IL ON SI.InvoiceID = IL.InvoiceID
+		group by SI.InvoiceID
+		having SUM(IL.Quantity*IL.UnitPrice) > 27000
+	) AS LL
+INNER JOIN
+	(
+		select SO.OrderID, SUM(OL.PickedQuantity*OL.UnitPrice) AS TotalSummForPickedItems
+		from 
+			[Sales].[Orders]                as SO
+			INNER JOIN [Sales].[OrderLines] as OL ON SO.OrderID=OL.OrderID
+		where SO.PickingCompletedWhen IS NOT NULL
+		group by SO.OrderID
+	) AS RR ON LL.OrderID=RR.OrderID
+INNER JOIN
+	Application.People as PP ON PP.PersonID = LL.SalespersonPersonID
+ORDER BY LL.TotalSummByInvoice DESC
