@@ -16,7 +16,7 @@ homework_04
 
 <hr>
 
-[Ссылка на файл с ДЗ04](hw_subqueries_tasks-188-274338.sql)
+[Ссылка на файл с ДЗ04](../homework_04/hw_subqueries_tasks-188-274338.sql)
 <hr>
 
 ### Описание ДЗ
