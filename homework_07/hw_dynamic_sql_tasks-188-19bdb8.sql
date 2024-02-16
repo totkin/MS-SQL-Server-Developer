@@ -77,6 +77,6 @@ SELECT
 set @strSQL_template=replace(@strSQL_template,'{REPLACE}',@strSQL_inside)
 print @strSQL_template
 
-EXEC(@strSQL_template)
+EXEC sp_executesql @strSQL_template
 
 
