@@ -30,14 +30,65 @@ USE WideWorldImporters
 Продажи смотреть в таблице Sales.Invoices.
 */
 
-TODO: напишите здесь свое решение
+-- WITH
+----------------------------------------------------------------
+
+WITH SP(SalespersonPersonID) AS(
+SELECT distinct SalespersonPersonID
+FROM Sales.Invoices as SI
+WHERE InvoiceDate='2015-07-04'
+)
+
+select PP.FullName
+from Application.People as PP
+	 left outer join  SP on PP.PersonID=SP.SalespersonPersonID
+where PP.IsSalesperson = 1 and SP.SalespersonPersonID is null
+
+
+-- SUB
+----------------------------------------------------------------
+
+select FullName
+from Application.People as PP
+where IsSalesperson = 1
+and PersonID
+	not in (SELECT distinct SalespersonPersonID
+			FROM Sales.Invoices as SI
+			WHERE InvoiceDate='2015-07-04')
+
+
 
 /*
 2. Выберите товары с минимальной ценой (подзапросом). Сделайте два варианта подзапроса. 
 Вывести: ИД товара, наименование товара, цена.
 */
 
-TODO: напишите здесь свое решение
+-- var 1
+-------------------------------------------------------------------------------
+SELECT DISTINCT
+	SI.StockItemID, SI.StockItemName, OL.UnitPrice
+FROM
+	Sales.OrderLines                AS OL
+	INNER JOIN Warehouse.StockItems AS SI ON OL.StockItemID = SI.StockItemID
+	INNER JOIN (
+		SELECT min(UnitPrice) AS MP
+		FROM Sales.OrderLines where isnull(Quantity,0)>0
+	)                               AS MP ON OL.UnitPrice=MP.MP
+
+
+-- var 2
+-------------------------------------------------------------------------------
+SELECT TOP(1)
+	SI.StockItemID, SI.StockItemName,
+	(SELECT min(OL.UnitPrice) 
+     FROM Sales.OrderLines as OL
+	 WHERE SI.StockItemID = OL.StockItemID AND isnull(OL.Quantity,0)>0
+	 GROUP BY OL.StockItemID) as UnitPrice
+FROM
+	Warehouse.StockItems as SI
+ORDER BY 3
+
+
 
 /*
 3. Выберите информацию по клиентам, которые перевели компании пять максимальных платежей 
@@ -45,7 +96,61 @@ TODO: напишите здесь свое решение
 Представьте несколько способов (в том числе с CTE). 
 */
 
-TODO: напишите здесь свое решение
+-- var 1
+-------------------------------------------------------------------------------
+WITH CI(CustomerID)
+AS(
+	SELECT TOP(5) CustomerID
+	FROM Sales.CustomerTransactions
+	ORDER BY TransactionAmount DESC
+)
+
+SELECT CC.CustomerID, CC.CustomerName
+FROM Sales.Customers AS CC
+WHERE  CC.CustomerID in (select CustomerID from CI)
+ORDER BY CC.CustomerID, CC.CustomerName
+
+
+-- var 2
+-------------------------------------------------------------------------------
+WITH CI(CustomerID)
+AS(
+	SELECT TOP(5) CustomerID
+	FROM Sales.CustomerTransactions
+	ORDER BY TransactionAmount DESC
+)
+
+SELECT DISTINCT CC.CustomerID, CC.CustomerName
+FROM Sales.Customers AS CC INNER JOIN CI ON CC.CustomerID=CI.CustomerID
+ORDER BY CC.CustomerID, CC.CustomerName
+
+
+-- var 3
+-------------------------------------------------------------------------------
+SELECT DISTINCT CustomerID, CustomerName
+FROM (
+	SELECT TOP(5)
+		CC.CustomerID, CC.CustomerName, CT.TransactionAmount
+	FROM Sales.CustomerTransactions AS CT
+		 INNER JOIN Sales.Customers AS CC ON CT.CustomerID = CC.CustomerID
+	ORDER BY TransactionAmount DESC
+) as SOURCE_TABLE
+ORDER BY CustomerID, CustomerName
+
+
+-- var 4
+-------------------------------------------------------------------------------
+SELECT CustomerID, CustomerName
+FROM Sales.Customers
+WHERE CustomerID in (
+	SELECT DISTINCT CustomerID
+		FROM Sales.CustomerTransactions
+		WHERE TransactionAmount in (
+			SELECT TOP(5) TransactionAmount FROM Sales.CustomerTransactions ORDER BY TransactionAmount DESC
+		)
+	)
+ORDER BY CustomerID, CustomerName
+
 
 /*
 4. Выберите города (ид и название), в которые были доставлены товары, 
@@ -53,7 +158,11 @@ TODO: напишите здесь свое решение
 который осуществлял упаковку заказов (PackedByPersonID).
 */
 
-TODO: напишите здесь свое решение
+-- var 1
+-------------------------------------------------------------------------------
+WITH SI(StockItemID)
+AS(
+
 
 -- ---------------------------------------------------------------------------
 -- Опциональное задание
@@ -91,5 +200,3 @@ FROM Sales.Invoices
 ORDER BY TotalSumm DESC
 
 -- --
-
-TODO: напишите здесь свое решение
