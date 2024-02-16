@@ -39,7 +39,47 @@ InvoiceMonth | Peeples Valley, AZ | Medicine Lodge, KS | Gasport, NY | Sylvanite
 -------------+--------------------+--------------------+-------------+--------------+------------
 */
 
-напишите здесь свое решение
+
+-- прототипирование на group by
+
+select 
+	replace(replace([CustomerName],'Tailspin Toys (',''),')','') as [клиент уточнение],
+	dateadd(day,1,eomonth(SI.InvoiceDate,-1)) as [InvoiceMonth],
+	count(distinct SI.InvoiceID)
+from
+	Sales.Invoices                AS SI
+	INNER JOIN Sales.InvoiceLines AS IL ON SI.InvoiceID = IL.InvoiceID
+	INNER JOIN Sales.Customers    AS CC ON SI.CustomerID = CC.CustomerID
+where CC.CustomerID between 2 and 6
+group by replace(replace([CustomerName],'Tailspin Toys (',''),')',''),
+	dateadd(day,1,eomonth(SI.InvoiceDate,-1))
+
+
+
+-- pivot
+
+SELECT 
+  *
+  ---- вариант с детальным списком столбцов, но в простой сборке (присутсвуют только нужные столбцы и порядок столбцов не важен) можно не заморачиваться
+  --[InvoiceMonth], [Gasport, NY],[Jessie, ND],[Medicine Lodge, KS],[Peeples Valley, AZ],[Sylvanite, MT]  
+FROM
+(
+	select
+		replace(replace([CustomerName],'Tailspin Toys (',''),')','') as [клиент уточнение],
+		dateadd(day,1,eomonth(SI.InvoiceDate,-1)) as [InvoiceMonth],
+		SI.InvoiceID
+	from
+		Sales.Invoices             AS SI
+		INNER JOIN Sales.Customers AS CC ON SI.CustomerID = CC.CustomerID
+) AS SourceTable  
+PIVOT  
+(  
+  count(InvoiceID)
+  FOR [клиент уточнение] IN ([Gasport, NY],[Jessie, ND],[Medicine Lodge, KS],[Peeples Valley, AZ],[Sylvanite, MT])  
+) AS PivotTable
+order by [InvoiceMonth]
+
+
 
 /*
 2. Для всех клиентов с именем, в котором есть "Tailspin Toys"
@@ -56,7 +96,25 @@ Tailspin Toys (Head Office) | Ribeiroville
 ----------------------------+--------------------
 */
 
-напишите здесь свое решение
+
+-- вспомогательный запрос для поиска нужных колонок
+SELECT COLUMN_NAME
+FROM information_schema.columns
+WHERE TABLE_SCHEMA='Sales' AND TABLE_NAME='Customers' AND COLUMN_NAME like '%Addres%'
+
+
+-- решение задачи
+SELECT [CustomerName], [AddressLine] 
+FROM [Sales].[Customers]  
+UNPIVOT  
+   (AddressLine FOR Adresses IN   
+      ([DeliveryAddressLine1],[DeliveryAddressLine2],[PostalAddressLine1],[PostalAddressLine2])  
+	)AS unpvt
+where [CustomerName] like '%Tailspin Toys%'
+order by  [CustomerName], [AddressLine] 
+
+
+
 
 /*
 3. В таблице стран (Application.Countries) есть поля с цифровым кодом страны и с буквенным.
@@ -74,11 +132,34 @@ CountryId | CountryName | Code
 ----------+-------------+-------
 */
 
-напишите здесь свое решение
+
+SELECT CountryId, CountryName, Code 
+FROM (select
+		CountryId, CountryName,[IsoAlpha3Code] as N1,
+		cast([IsoNumericCode] as nvarchar(3))  as N2
+	   from [Application].[Countries]
+	  ) as CC
+UNPIVOT  
+	(Code FOR IsoCodes IN (N1,N2)) AS unpvt
+ORDER BY CountryName, Code 
+
 
 /*
 4. Выберите по каждому клиенту два самых дорогих товара, которые он покупал.
 В результатах должно быть ид клиета, его название, ид товара, цена, дата покупки.
 */
 
-напишите здесь свое решение
+SELECT
+	CC.CustomerID, CC.CustomerName,[StockItemID],[UnitPrice],[InvoiceDate]
+FROM [Sales].[Customers] as CC
+OUTER APPLY -- на всякий случай OUTER
+(SELECT TOP 2 
+	[StockItemID],[UnitPrice],max([IS].[InvoiceDate]) as [InvoiceDate]
+	FROM
+		Sales.Invoices                 AS [IS]
+		INNER JOIN Sales.InvoiceLines  AS IL ON [IS].InvoiceID = IL.InvoiceID
+	WHERE [IS].[CustomerID]=CC.CustomerID
+	group by [StockItemID],[UnitPrice]
+	order by [UnitPrice] desc
+	) as DD
+order by CC.CustomerID, CC.CustomerName,[UnitPrice] desc
