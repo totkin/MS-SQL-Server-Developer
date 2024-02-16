@@ -44,7 +44,7 @@ InvoiceMonth | Peeples Valley, AZ | Medicine Lodge, KS | Gasport, NY | Sylvanite
 
 select 
 	replace(replace([CustomerName],'Tailspin Toys (',''),')','') as [клиент уточнение],
-	dateadd(day,1,eomonth(SI.InvoiceDate,-1)) as [InvoiceMonth],
+	format(SI.InvoiceDate,'01.MM.yyyy') as [InvoiceMonth],
 	count(distinct SI.InvoiceID)
 from
 	Sales.Invoices                AS SI
@@ -66,7 +66,7 @@ FROM
 (
 	select
 		replace(replace([CustomerName],'Tailspin Toys (',''),')','') as [клиент уточнение],
-		dateadd(day,1,eomonth(SI.InvoiceDate,-1)) as [InvoiceMonth],
+		format(SI.InvoiceDate,'01.MM.yyyy') as [InvoiceMonth],
 		SI.InvoiceID
 	from
 		Sales.Invoices             AS SI

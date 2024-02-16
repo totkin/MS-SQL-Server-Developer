@@ -42,4 +42,41 @@ InvoiceMonth | Aakriti Byrraju    | Abel Spirlea       | Abel Tatarescu | ... (�
 */
 
 
-напишите здесь свое решение
+DECLARE @strSQL_template nvarchar(max), @strSQL_inside nvarchar(max)
+
+SET @strSQL_template= N'
+SELECT *
+FROM
+(
+	select
+		[CustomerName],
+		format(SI.InvoiceDate,''01.MM.yyyy'') as [InvoiceMonth],
+		SI.InvoiceID
+	from
+		Sales.Invoices             AS SI
+		INNER JOIN Sales.Customers AS CC ON SI.CustomerID = CC.CustomerID
+) AS SourceTable  
+PIVOT  
+(  
+  count(InvoiceID)
+  FOR [CustomerName] IN ({REPLACE})  
+) AS PivotTable
+order by [InvoiceMonth]'
+
+
+SELECT
+@strSQL_inside=STUFF( (SELECT '],[' + [CustomerName]
+						 FROM [Sales].[Customers]
+						 order by [CustomerName]
+						 FOR XML PATH ('')
+					  ),
+					  1, 2, ''
+					) + ']'
+
+
+set @strSQL_template=replace(@strSQL_template,'{REPLACE}',@strSQL_inside)
+print @strSQL_template
+
+EXEC(@strSQL_template)
+
+
