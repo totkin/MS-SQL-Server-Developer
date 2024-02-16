@@ -38,6 +38,7 @@ USE WideWorldImporters
 Нарастающий итог должен быть без оконной функции.
 */
 
+
 -- вариант с табличной переменной
 ---------------------------------------------------------------------------------------------------------
 SET STATISTICS TIME ON;
@@ -71,17 +72,19 @@ GROUP BY SI.InvoiceID,CC.CustomerName,SI.InvoiceDate
 SET STATISTICS TIME OFF; 
 
 /* ------------------------------------------------------- вывод
+
  SQL Server Execution Times:
-   CPU time = 56 ms,  elapsed time = 60 ms.
+   CPU time = 60 ms,  elapsed time = 62 ms.
 
 (41 rows affected)
 
 (70510 rows affected)
 
  SQL Server Execution Times:
-   CPU time = 951 ms,  elapsed time = 981 ms.
+   CPU time = 982 ms,  elapsed time = 1011 ms.
 
-Completion time: 2024-02-16T22:24:34.8215722+03:00
+Completion time: 2024-02-17T00:09:50.3644387+03:00
+
 ---------------------------------------------------------- вывод */
 
 
@@ -99,7 +102,7 @@ SELECT
 	SI.InvoiceDate as [дата продажи],
 	SUM(IL.UnitPrice * IL.Quantity) AS [сумма продажи],
 	SUM(SUM(IL.UnitPrice * IL.Quantity))
-		over(partition by YEAR(SI.InvoiceDate)*100+MONTH(SI.InvoiceDate)
+		over(order by year(SI.InvoiceDate)*100+month(SI.InvoiceDate)
 			 ) as  [сумма нарастающим итогом]
 FROM
 	Sales.Invoices                AS SI
@@ -111,17 +114,14 @@ SET STATISTICS TIME OFF;
 
 
 /* ------------------------------------------------------- вывод
- SQL Server Execution Times:
-   CPU time = 57 ms,  elapsed time = 59 ms.
-
-(41 rows affected)
 
 (70510 rows affected)
 
  SQL Server Execution Times:
-   CPU time = 965 ms,  elapsed time = 997 ms.
+   CPU time = 90 ms,  elapsed time = 105 ms.
 
-Completion time: 2024-02-16T22:17:08.4708181+03:00
+Completion time: 2024-02-17T00:10:10.2446136+03:00
+
 ---------------------------------------------------------- вывод */
 
 
@@ -220,8 +220,12 @@ select CustomerID, CustomerName, [StockItemID], UnitPrice, InvoiceDate
 from 
 (
 	SELECT
-		CC.CustomerID, CC.CustomerName, IL.[StockItemID], IL.UnitPrice, max([IS].InvoiceDate) as InvoiceDate,
-		RANK() over (partition by CC.CustomerID order by IL.UnitPrice desc, sum(IL.Quantity*IL.UnitPrice) desc) as rate
+		CC.CustomerID, CC.CustomerName, IL.[StockItemID], IL.UnitPrice,
+		max([IS].InvoiceDate) as InvoiceDate,
+		rank() over (partition by CC.CustomerID
+					 order by IL.UnitPrice desc,
+					          sum(IL.Quantity*IL.UnitPrice) desc
+					) as rate
 	FROM 
 		Sales.Invoices                AS [IS]
 		INNER JOIN Sales.InvoiceLines AS IL ON [IS].InvoiceID = IL.InvoiceID
@@ -229,4 +233,5 @@ from
 	group by CC.CustomerID, CC.CustomerName, IL.[StockItemID], IL.UnitPrice
 ) as TT where rate<3
 
---Опционально можете для каждого запроса без оконных функций сделать вариант запросов с оконными функциями и сравнить их производительность. 
+--Опционально можете для каждого запроса без оконных функций сделать вариант запросов с оконными функциями и сравнить их производительность.
+--НЕ ВЫПОЛНЯЛОСЬ
