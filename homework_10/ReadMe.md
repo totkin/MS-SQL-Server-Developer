@@ -16,7 +16,8 @@ homework_10
 
 <hr>
 
-[Ссылка на файл с ДЗ10](hw_dynamic_sql_tasks-188-19bdb8.sql)
+[Файл проекта](Project.md)
+[Файл SQL](Project.sql)
 <hr>
 
 ### Описание ДЗ
