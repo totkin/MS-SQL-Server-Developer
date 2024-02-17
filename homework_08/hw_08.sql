@@ -47,12 +47,12 @@ SELECT
 	       then
 				case CC.DATA_TYPE 
 				-- рандомизатор с примитивным учётом типа
-				when 'int'        then 'ABS(CHECKSUM(NEWID()) % 10)'        -- ID до 10 скорее всего встретятся в справочниках
+				when 'int'        then 'ABS(CHECKSUM(NEWID()) % 10)+1'      -- ID до 10 скорее всего встретятся в справочниках
 				when 'bit'        then '1'
-				when 'decimal'    then 'cast(RAND()*1000 as decimal(18,2))' -- по наиболее часто встретившемуся варианту
+				when 'decimal'    then 'CAST(RAND()*1000 AS DECIMAL(18,2))' -- по наиболее часто встретившемуся варианту
 				when 'date'       then 'CAST(CURRENT_TIMESTAMP AS DATE)' 
 				when 'datetime2'  then 'CURRENT_TIMESTAMP'
-				when 'nvarchar'   then 'LEFT(CONVERT(varchar(255), NEWID()),' +  CAST(CC.CHARACTER_MAXIMUM_LENGTH AS NVARCHAR(3)) +')'
+				when 'nvarchar'   then 'LEFT(CONVERT(VARCHAR(255), NEWID()),' +  CAST(CC.CHARACTER_MAXIMUM_LENGTH AS NVARCHAR(3)) +')'
 				else '--need value--' end + ','
 			else '' end
 	  as [Rand_Values_List]

@@ -9,13 +9,19 @@
 ```
 homework_09
 ├── hw_xml_json_tasks-188-97b45f.sql    - Домашняя работа запросами SQL
+├── StockItems-188-1fb5df.xml           - файл с данными
 ├── ReadMe.md                           - Данный файл
 └── _work                               - Рабочая папка с материалами /оставлена для своих задач автора/
 
 ```
 
 <hr>
+перенос данных (MS SQL развернут в контейнере)
 
+```bash
+docker exec -it OTUSSQL mkdir /var/opt/mssql/otusdata
+docker cp StockItems-188-1fb5df.xml OTUSSQL:/var/opt/mssql/otusdata
+```
 [Ссылка на файл с ДЗ09](hw_xml_json_tasks-188-97b45f.sql)
 <hr>
 

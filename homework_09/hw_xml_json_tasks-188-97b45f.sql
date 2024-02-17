@@ -41,7 +41,124 @@ USE WideWorldImporters
 Сделать два варианта: с помощью OPENXML и через XQuery.
 */
 
-напишите здесь свое решение
+DECLARE @xmlDocument xml
+DECLARE @docHandle int;
+
+-- чтение
+SELECT @xmlDocument = BulkColumn
+FROM OPENROWSET(BULK '/var/opt/mssql/otusdata/StockItems-188-1fb5df.xml', SINGLE_CLOB) as data
+
+-- предпоготовка: создание представления документа
+EXEC sp_xml_preparedocument @docHandle OUTPUT, @xmlDocument;
+
+
+
+-- изучение структуры документа
+with C as
+(
+  select T.X.value('local-name(.)', 'nvarchar(max)') as Structure,
+         T.X.query('*') as SubNodes,
+         T.X.exist('*') as HasSubNodes
+  from @xmlDocument.nodes('*') as T(X)
+  union all
+  select C.structure + N'/' + T.X.value('local-name(.)', 'nvarchar(max)'),
+         T.X.query('*'),
+         T.X.exist('*')
+  from C
+    cross apply C.SubNodes.nodes('*') as T(X)
+)
+select DISTINCT C.Structure
+from C
+where C.HasSubNodes = 0;
+
+
+-- выборка во временную таблицу
+
+-- вариант XQuery. РАБОТАЕТ, но закомменчен
+/*
+IF OBJECT_ID('tempdb..#temp_Warehouse_StockItems') IS NOT NULL
+    drop table #temp_Warehouse_StockItems
+
+SELECT
+	x.value('@Name', 'nvarchar(255)') AS [StockItemName],
+	x.value('(IsChillerStock)[1]', 'bit') AS [IsChillerStock],
+	x.value('(SupplierID)[1]', 'int') AS [SupplierID],
+	x.value('(TaxRate)[1]', 'decimal(18, 3)') AS [TaxRate],
+	x.value('(UnitPrice)[1]', 'decimal(18, 2)') AS [UnitPrice],
+	x.value('(Package/OuterPackageID)[1]', 'int') AS [OuterPackageID],
+	x.value('(Package/QuantityPerOuter)[1]', 'int') AS [QuantityPerOuter],
+	x.value('(Package/TypicalWeightPerUnit)[1]', 'decimal(18, 3)') AS [TypicalWeightPerUnit],
+	x.value('(Package/UnitPackageID)[1]', 'int') AS [UnitPackageID]
+INTO #temp_Warehouse_StockItems
+FROM
+@xmlDocument.nodes('StockItems/Item') TempXML1 (x)
+
+*/
+
+-- вариант OPENXML
+
+IF OBJECT_ID('tempdb..#temp_Warehouse_StockItems') IS NOT NULL
+    drop table #temp_Warehouse_StockItems
+
+SELECT *
+INTO #temp_Warehouse_StockItems
+FROM OPENXML (@docHandle,'/StockItems/Item')
+WITH (
+	[StockItemName]        [nvarchar](100)   '@Name',
+	[IsChillerStock]       [bit]             'IsChillerStock',
+	[OuterPackageID]       [int]             'Package/OuterPackageID',
+	[QuantityPerOuter]     [int]             'Package/QuantityPerOuter',
+	[TypicalWeightPerUnit] [decimal](18, 3)  'Package/TypicalWeightPerUnit',
+	[UnitPackageID]        [int]             'Package/UnitPackageID',
+	[SupplierID]           [int]             'SupplierID',
+	[TaxRate]              [decimal](18, 3)  'TaxRate',
+	[UnitPrice]            [decimal](18, 2)  'UnitPrice');
+
+
+
+
+-- MERGE
+DECLARE @SummaryOfChanges TABLE (Change VARCHAR(20));
+
+MERGE Warehouse.StockItems AS T_Base
+USING #temp_Warehouse_StockItems AS T_Source
+ON (T_Base.[StockItemName] = T_Source.[StockItemName])
+WHEN MATCHED THEN
+    UPDATE SET 
+	[IsChillerStock] = T_Source.[IsChillerStock],
+	[OuterPackageID] = T_Source.[OuterPackageID],
+	[QuantityPerOuter] = T_Source.[QuantityPerOuter],
+	[TypicalWeightPerUnit] = T_Source.[TypicalWeightPerUnit],
+	[UnitPackageID] = T_Source.[UnitPackageID],
+	[SupplierID] = T_Source.[SupplierID],
+	[TaxRate] = T_Source.[TaxRate],
+	[UnitPrice] = T_Source.[UnitPrice],
+	[Brand] = N'Otus' -- just for fun :)
+WHEN NOT MATCHED THEN
+	-- добавлено 2 поля, которых нет в файле, но которые нужны при добалвении (поставлены заглушки
+    INSERT ([StockItemName],[IsChillerStock],[OuterPackageID],[QuantityPerOuter],[TypicalWeightPerUnit],[UnitPackageID],[SupplierID],[TaxRate],[UnitPrice],
+			[LastEditedBy],[LeadTimeDays],[Brand])
+	VALUES (T_Source.[StockItemName],T_Source.[IsChillerStock],T_Source.[OuterPackageID],T_Source.[QuantityPerOuter],T_Source.[TypicalWeightPerUnit],
+			T_Source.[UnitPackageID],T_Source.[SupplierID],T_Source.[TaxRate],T_Source.[UnitPrice],
+			ABS(CHECKSUM(NEWID()) % 10)+1,ABS(CHECKSUM(NEWID()) % 10)+1,N'Otus')
+OUTPUT $action
+INTO @SummaryOfChanges;
+
+SELECT Change,
+    COUNT(*) AS CountPerChange
+FROM @SummaryOfChanges
+GROUP BY Change;
+
+select *
+from Warehouse.StockItems
+where [StockItemName] in (select [StockItemName] from #temp_Warehouse_StockItems)
+
+
+
+-- удалить представление документа
+EXEC sp_xml_removedocument @docHandle;
+
+
 
 /*
 2. Выгрузить данные из таблицы StockItems в такой же xml-файл, как StockItems.xml
