@@ -163,8 +163,82 @@ END
 */
 
 
+-------------------------------------------------------------------
+-- Сливаю одну запись, изменяю [CustomerName] и PostalPostalCode --
+-------------------------------------------------------------------
+
+IF OBJECT_ID('tempdb..#temp_otus') IS NOT NULL DROP TABLE #temp_otus
+
+select *
+into #temp_otus
+from [WideWorldImporters].[Sales].[Customers]
+where [CustomerID] = (select max([CustomerID]) from [WideWorldImporters].[Sales].[Customers])
+
+update #temp_otus
+set [CustomerName]='OTUS ' + cast(CURRENT_TIMESTAMP as nvarchar(50)), -- до 100 символов
+PostalPostalCode=CAST('Deep fake' AS nvarchar(10))
+
+
+select * from #temp_otus
+
+---------------------------------------
+-- делаю MERGE в базовый справочник  --
+---------------------------------------
+
+DECLARE @SummaryOfChanges TABLE (Change VARCHAR(20));
+
+MERGE [Sales].[Customers] AS T_Base
+USING #temp_otus AS T_Source
+ON (T_Base.[CustomerID] = T_Source.[CustomerID])
+WHEN MATCHED THEN
+    UPDATE SET [CustomerName] = T_Source.[CustomerName], [PostalPostalCode] = T_Source.[PostalPostalCode]
+WHEN NOT MATCHED THEN
+    INSERT (
+			[BillToCustomerID], [CustomerCategoryID], [PrimaryContactPersonID], [DeliveryMethodID], [DeliveryCityID], [PostalCityID], [LastEditedBy], [CustomerName],
+			[IsStatementSent],[IsOnCreditHold],[AccountOpenedDate],[StandardDiscountPercentage],[PaymentDays],[PhoneNumber],
+			[FaxNumber],[WebsiteURL],[DeliveryAddressLine1],[DeliveryPostalCode],[PostalAddressLine1],[PostalPostalCode]
+	) 
+    VALUES (
+			T_Source.[BillToCustomerID], T_Source.[CustomerCategoryID], T_Source.[PrimaryContactPersonID], T_Source.[DeliveryMethodID], T_Source.[DeliveryCityID], T_Source.[PostalCityID], T_Source.[LastEditedBy], T_Source.[CustomerName],
+			T_Source.[IsStatementSent],T_Source.[IsOnCreditHold],T_Source.[AccountOpenedDate],T_Source.[StandardDiscountPercentage],T_Source.[PaymentDays],T_Source.[PhoneNumber],
+			T_Source.[FaxNumber],T_Source.[WebsiteURL],T_Source.[DeliveryAddressLine1],T_Source.[DeliveryPostalCode],T_Source.[PostalAddressLine1],T_Source.[PostalPostalCode]				 
+	)
+OUTPUT $action
+INTO @SummaryOfChanges;
+
+SELECT Change,
+    COUNT(*) AS CountPerChange
+FROM @SummaryOfChanges
+GROUP BY Change;
+
+select *
+from [WideWorldImporters].[Sales].[Customers]
+where [CustomerID] = (select max([CustomerID]) from [WideWorldImporters].[Sales].[Customers])
+
 
 /*
 5. Напишите запрос, который выгрузит данные через bcp out и загрузить через bulk insert
 */
 
+
+exec master..xp_cmdshell 'bcp WideWorldImporters.Application.PaymentMethods out C:\__OTUS-202402__\MS-SQL-Server-Developer\homework_08\data_out.txt -c -T'
+
+
+CREATE TABLE [dbo].[Test_Otus_202402](
+	[PaymentMethodID] [int] NOT NULL,
+	[PaymentMethodName] [nvarchar](50) NOT NULL,
+	[LastEditedBy] [int] NOT NULL,
+	[ValidFrom] [datetime2](7),
+	[ValidTo] [datetime2](7) )
+
+BULK INSERT [dbo].[Test_Otus_202402]
+    FROM "C:\__OTUS-202402__\MS-SQL-Server-Developer\homework_08\data_out.txt"
+	WITH 
+		(
+		BATCHSIZE = 1000,
+		DATAFILETYPE = 'char',
+		FIELDTERMINATOR = '\t',
+		ROWTERMINATOR ='\n',
+		KEEPNULLS,
+		TABLOCK
+		);
