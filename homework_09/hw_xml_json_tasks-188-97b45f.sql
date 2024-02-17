@@ -115,8 +115,6 @@ WITH (
 	[UnitPrice]            [decimal](18, 2)  'UnitPrice');
 
 
-
-
 -- MERGE
 DECLARE @SummaryOfChanges TABLE (Change VARCHAR(20));
 
@@ -164,7 +162,35 @@ EXEC sp_xml_removedocument @docHandle;
 2. Выгрузить данные из таблицы StockItems в такой же xml-файл, как StockItems.xml
 */
 
-напишите здесь свое решение
+--EXEC master.dbo.sp_configure 'show advanced options', 1
+--RECONFIGURE
+--EXEC master.dbo.sp_configure 'xp_cmdshell', 1
+--RECONFIGURE
+
+DECLARE @strCommand nvarchar(max)='bcp "{SQL}" queryout "{FILE}" -T -c -t,'
+DECLARE @strSQL     nvarchar(max)
+DECLARE @strFILE    nvarchar(max)='/var/opt/mssql/otusdata/StockItems.xml'
+
+
+set @strSQL=REPLACE('
+SELECT
+	[StockItemName]        as ''@Name'',
+	[IsChillerStock]       as ''IsChillerStock'',
+	[OuterPackageID]       as ''Package/OuterPackageID'',
+	[QuantityPerOuter]     as ''Package/QuantityPerOuter'',
+	[TypicalWeightPerUnit] as ''Package/TypicalWeightPerUnit'',
+	[UnitPackageID]        as ''Package/UnitPackageID'',
+	[SupplierID]           as ''SupplierID'',
+	[TaxRate]              as ''TaxRate'',
+	[UnitPrice]            as ''UnitPrice''
+FROM [WideWorldImporters].[Warehouse].[StockItems] FOR XML PATH(''Item''), ROOT(''StockItems'')
+',char(13) + char(10),' ')
+
+WHILE CHARINDEX('  ',@strSQL) <> 0
+ SET @strSQL = REPLACE(@strSQL,'  ',' ');
+
+SET @strCommand=replace(replace(@strCommand,'{SQL}',@strSQL),'{FILE}',@strFILE)
+EXEC xp_cmdshell @strCommand
 
 
 /*
@@ -176,7 +202,12 @@ EXEC sp_xml_removedocument @docHandle;
 - FirstTag (из поля CustomFields, первое значение из массива Tags)
 */
 
-напишите здесь свое решение
+select 
+StockItemID,StockItemName,
+JSON_VALUE(CustomFields,'$.CountryOfManufacture') as CountryOfManufacture,
+(select top(1) [Value] from OPENJSON(CustomFields)) as FirstTag
+from [Warehouse].[StockItems] as S
+
 
 /*
 4. Найти в StockItems строки, где есть тэг "Vintage".
@@ -198,4 +229,12 @@ EXEC sp_xml_removedocument @docHandle;
 */
 
 
-напишите здесь свое решение
+select 
+StockItemID,StockItemName,
+STUFF( (SELECT ', ' + [key]
+		FROM OPENJSON([CustomFields])
+		FOR XML PATH ('')),
+		1, 2, '') as [все теги (из CustomFields) через запятую в одном поле]
+from [Warehouse].[StockItems] as S
+CROSS APPLY OPENJSON(S.[CustomFields],'$.Tags') as T
+where T.[value]='Vintage'
