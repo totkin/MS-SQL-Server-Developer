@@ -205,7 +205,7 @@ EXEC xp_cmdshell @strCommand
 select 
 StockItemID,StockItemName,
 JSON_VALUE(CustomFields,'$.CountryOfManufacture') as CountryOfManufacture,
-(select top(1) [Value] from OPENJSON(CustomFields)) as FirstTag
+JSON_VALUE(CustomFields,'$.Tags[0]') as FirstTag
 from [Warehouse].[StockItems] as S
 
 
