@@ -17,7 +17,7 @@ homework_10
 <hr>
 
 [Файл проекта](Project.md)
-[Файл SQL](Project.sql)
+
 <hr>
 
 ### Описание ДЗ
