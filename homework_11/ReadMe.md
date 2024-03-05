@@ -23,7 +23,7 @@ homework_11
 
 Иллюстрация 
 
-![img.png](img.png)
+![img.png](../homework_10/src/img.png)
 
 <hr>
 
