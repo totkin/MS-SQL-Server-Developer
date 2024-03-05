@@ -17,7 +17,13 @@ homework_11
 
 <hr>
 
-[Файл проекта](Project.md)
+Домашнее задение [SQL](Project.sql)
+
+[Файл](Project.md) проекта
+
+Иллюстрация 
+
+![img.png](img.png)
 
 <hr>
 
