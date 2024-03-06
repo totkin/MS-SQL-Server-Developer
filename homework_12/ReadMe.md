@@ -18,6 +18,7 @@ homework_12
 Домашнее задание [SQL](HW12.sql)
 
 Результат:
+
 ![img.png](../src/create%20idx.png)
 
 <hr>
