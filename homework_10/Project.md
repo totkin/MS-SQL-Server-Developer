@@ -34,4 +34,4 @@
 - таблица периодов - автогенерация на стороне SSAS.
 
 #### Рабочий макет структуры данных
-![schema.png](src%2Fschema.png)
+![schema.png](..%2Fsrc%2Fschema.png)

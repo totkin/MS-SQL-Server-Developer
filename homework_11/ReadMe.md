@@ -10,9 +10,7 @@
 homework_11
 ├── ReadMe.md     - Данный файл
 ├── Project.md    - Описание проекта
-├── Project.sql   - Описание проекта
-└── src           - Рабочая папка с материалами /оставлена для своих задач автора/
-
+└── Project.sql   - Код создания БД и таблиц
 ```
 
 <hr>
@@ -23,7 +21,7 @@ homework_11
 
 Иллюстрация 
 
-![img.png](../homework_10/src/img.png)
+![img.png](../src/DB%20and%20Tables%20creation.png)
 
 <hr>
 
