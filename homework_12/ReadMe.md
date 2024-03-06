@@ -21,6 +21,12 @@ homework_12
 
 ![img.png](../src/create%20idx.png)
 
+Ипользование индексов:
+
+![img.png](../src/Composite%20idx.png)
+
+![img.png](../src/ActivePrices%20idx.png)
+
 <hr>
 
 ### Описание ДЗ
