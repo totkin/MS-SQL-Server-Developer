@@ -9,13 +9,16 @@
 ```
 homework_12
 ├── ReadMe.md     - Данный файл
-└── Project.sql   - Домашняя работа
+└── HW12.sql      - Домашняя работа
 
 ```
 
 <hr>
 
-Домашнее задание SQL
+Домашнее задание [SQL](HW12.sql)
+
+Результат:
+![img.png](../src/create%20idx.png)
 
 <hr>
 
