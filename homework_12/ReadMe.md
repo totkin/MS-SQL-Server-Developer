@@ -23,9 +23,9 @@ homework_12
 
 Ипользование индексов:
 
-![img.png](../src/Composite%20idx.png)
+![Composite idx.png](..%2Fsrc%2FComposite%20idx.png)
 
-![img.png](../src/idx ActivePrices.png)
+![idx ActivePrices.png](..%2Fsrc%2Fidx%20ActivePrices.png)
 
 <hr>
 
