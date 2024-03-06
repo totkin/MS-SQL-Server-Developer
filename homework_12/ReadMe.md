@@ -25,7 +25,7 @@ homework_12
 
 ![img.png](../src/Composite%20idx.png)
 
-![img.png](../src/ActivePrices%20idx.png)
+![img.png](../src/idx ActivePrices.png)
 
 <hr>
 
