@@ -1,0 +1,6 @@
+C:\Users\etkin_a\source\repos\OTUS2024\OTUS2024\bin\Debug\OTUS2024.dll
+C:\Users\etkin_a\source\repos\OTUS2024\OTUS2024\bin\Debug\OTUS2024.pdb
+C:\Users\etkin_a\source\repos\OTUS2024\OTUS2024\obj\Debug\OTUS2024.csproj.CoreCompileInputs.cache
+C:\Users\etkin_a\source\repos\OTUS2024\OTUS2024\obj\Debug\OTUS2024.dll
+C:\Users\etkin_a\source\repos\OTUS2024\OTUS2024\obj\Debug\OTUS2024.pdb
+C:\Users\etkin_a\source\repos\OTUS2024\OTUS2024\obj\Debug\OTUS2024.csproj.AssemblyReference.cache

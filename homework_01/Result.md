@@ -17,7 +17,7 @@ docker pull mcr.microsoft.com/mssql/server:2019-latest
 запуск контейнера
 
 ```bash
-docker run -e 'ACCEPT_EULA=Y' -e 'MSSQL_SA_PASSWORD=Otus202402' --name 'OTUSSQL' -p 1433:1433 -v sql1data:/var/opt/mssql -d mcr.microsoft.com/mssql/server:2019-latest
+docker run -e 'ACCEPT_EULA=Y' -e 'ACCEPT_EULA_ML=Y' -e 'MSSQL_SA_PASSWORD=Otus202402' --name 'OTUSSQL' -p 1433:1433 -v sql1data:/var/opt/mssql -d mcr.microsoft.com/mssql/server:2019-latest
 ```
 ![docker](../src/hw01_docker.png)
 
